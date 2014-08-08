@@ -45,7 +45,7 @@ static BOOL _logErrors;
 	OSStatus returnStatus = SecKeychainItemDelete([kcItem coreKeychainItem]);
 	if (returnStatus != noErr)
 	{
-		NSString *errorText = [NSString stringWithFormat: @"Error (%@) - %s", NSStringFromSelector(_cmd), GetMacOSStatusErrorString(returnStatus)];
+		NSString *errorText = [NSString stringWithFormat: @"Error %d (%@)", returnStatus, NSStringFromSelector(_cmd)];
 		NSLog(@"%@", errorText);
 		NSMutableDictionary *errorDetail = [NSMutableDictionary dictionary];
 		[errorDetail setValue: errorText forKey:NSLocalizedDescriptionKey];
@@ -134,7 +134,7 @@ static BOOL _logErrors;
 	OSStatus returnStatus = SecKeychainItemCopyContent(item, NULL, &list, NULL, NULL);
 	if (returnStatus != noErr || !item) {
 		if (_logErrors) {
-			NSLog(@"Error (%@) - %s", NSStringFromSelector(_cmd), GetMacOSStatusErrorString(returnStatus));
+			NSLog(@"Error %d (%@)", returnStatus, NSStringFromSelector(_cmd));
 		}
 		return nil;
 	}
@@ -188,7 +188,7 @@ static BOOL _logErrors;
 	OSStatus returnStatus = SecKeychainFindGenericPassword(NULL, serviceNameLength, serviceName, usernameLength, username, &passwordLength, (void **)&password, &item);
 	if (returnStatus != noErr || !item) {
 		if (_logErrors) {
-			NSLog(@"Error (%@) - %s", NSStringFromSelector(_cmd), GetMacOSStatusErrorString(returnStatus));
+			NSLog(@"Error %d (%@)", returnStatus, NSStringFromSelector(_cmd));
 		}
 		return nil;
 	}
@@ -213,7 +213,7 @@ static BOOL _logErrors;
 	OSStatus returnStatus = SecKeychainAddGenericPassword(NULL, (UInt32)strlen(serviceName), serviceName, (UInt32)strlen(username), username, (UInt32)strlen(password), (void *)password, &item);
 	
 	if (returnStatus != noErr || !item) {
-		NSLog(@"Error (%@) - %s", NSStringFromSelector(_cmd), GetMacOSStatusErrorString(returnStatus));
+		NSLog(@"Error %d (%@)", returnStatus, NSStringFromSelector(_cmd));
 		return nil;
 	}
 	return [EMGenericKeychainItem genericKeychainItem:item forServiceName:serviceNameString username:usernameString password:passwordString];
@@ -257,13 +257,8 @@ static BOOL _logErrors;
 + (EMInternetKeychainItem *)internetKeychainItemForServer:(NSString *)serverString withUsername:(NSString *)usernameString path:(NSString *)pathString port:(int)port protocol:(SecProtocolType)protocol {
 	
 	const char *server  = serverString == nil ? "" : [serverString UTF8String];
-	UInt32 serverLength = serverString == nil ? 0 : (UInt32)strlen(server);
-
 	const char *username  = usernameString == nil ? "" : [usernameString UTF8String];
-	UInt32 usernameLength = usernameString == nil ? 0 : (UInt32)strlen(username);
-	
 	const char *path  = pathString == nil ? "" : [pathString UTF8String];
-	UInt32 pathLength = pathString == nil ? 0 : (UInt32)strlen(path);
 	
 	char *password = nil;
 	UInt32 passwordLength = 0;
@@ -279,7 +274,7 @@ static BOOL _logErrors;
 	
 	if (returnStatus != noErr || !item) {
 		if (_logErrors) {
-			NSLog(@"Error (%@) - %s", NSStringFromSelector(_cmd), GetMacOSStatusErrorString(returnStatus));
+			NSLog(@"Error %d (%@)", returnStatus, NSStringFromSelector(_cmd));
 		}
 		return nil;
 	}
@@ -310,7 +305,7 @@ static BOOL _logErrors;
 	OSStatus returnStatus = SecKeychainAddInternetPassword(NULL, (UInt32)strlen(server), server, 0, NULL, (UInt32)strlen(username), username, (UInt32)strlen(path), path, port, protocol, kSecAuthenticationTypeDefault, (UInt32)strlen(password), (void *)password, &item);
 	
 	if (returnStatus != noErr || !item) {
-		NSLog(@"Error (%@) - %s", NSStringFromSelector(_cmd), GetMacOSStatusErrorString(returnStatus));
+		NSLog(@"Error %d (%@)", returnStatus, NSStringFromSelector(_cmd));
 		return nil;
 	}
 	return [EMInternetKeychainItem internetKeychainItem:item forServer:serverString username:usernameString password:passwordString path:pathString port:port protocol:protocol];
@@ -370,7 +365,7 @@ static BOOL _logErrors;
 	SecKeychainAttribute attributes[1];
 	attributes[0].tag = kSecProtocolItemAttr;
 	attributes[0].length = sizeof(newProtocol);
-	attributes[0].data = (void *)newProtocol;
+	attributes[0].data = (void *)(uintptr_t)newProtocol;
 	
 	SecKeychainAttributeList list;
 	list.count = 1;
